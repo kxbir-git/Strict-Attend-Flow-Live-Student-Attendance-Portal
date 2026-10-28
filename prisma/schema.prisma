@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum SessionStatus {
+  OPEN
+  SUBMITTED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  APPROVED_LEAVE
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(STUDENT)
+  language     String    @default("en")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  student      Student?
+  teacher      Teacher?
+  auditLogs    AuditLog[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Class {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "BCA-3A"
+  section     String   // e.g. "A"
+  department  String   // e.g. "Computer Applications"
+  semester    Int      // e.g. 3
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  students    Student[]
+  subjects    Subject[]
+  slots       TimetableSlot[]
+  sessions    AttendanceSession[]
+
+  @@unique([name, section])
+  @@map("classes")
+}
+
+model Student {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  rollNo      String   @unique
+  classId     String
+  section     String
+  goalPercent Float    @default(75.0)
+  parentEmail String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  records     AttendanceRecord[]
+  leaves      LeaveRequest[]
+  settings    StudentSettings?
+  badges      GamificationBadge[]
+  streak      Streak?
+
+  @@index([classId])
+  @@map("students")
+}
+
+model Teacher {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  employeeId  String   @unique
+  department  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjects    Subject[]
+  slots       TimetableSlot[]
+  sessions    AttendanceSession[]
+
+  @@map("teachers")
+}
+
+model Subject {
+  id                    String   @id @default(cuid())
+  name                  String   // e.g. "Database Management Systems"
+  code                  String   // e.g. "BCA-301"
+  classId               String
+  teacherId             String?
+  totalPlannedLectures  Int      @default(45)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  class                 Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher               Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  slots                 TimetableSlot[]
+  sessions              AttendanceSession[]
+
+  @@unique([code, classId])
+  @@index([classId])
+  @@index([teacherId])
+  @@map("subjects")
+}
+
+model Period {
+  id        String   @id @default(cuid())
+  periodNo  Int      @unique // 1 to 8
+  startTime String   // "09:00"
+  endTime   String   // "09:45"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("periods")
+}
+
+model TimetableSlot {
+  id        String   @id @default(cuid())
+  teacherId String
+  classId   String
+  subjectId String
+  dayOfWeek Int      // 1 = Monday, 2 = Tuesday, ... 6 = Saturday, 7 = Sunday
+  periodNo  Int      // 1 to 8
+  room      String   // e.g. "Room 204"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, dayOfWeek, periodNo])
+  @@index([classId, dayOfWeek, periodNo])
+  @@map("timetable_slots")
+}
+
+model AttendanceSession {
+  id          String        @id @default(cuid())
+  subjectId   String
+  teacherId   String
+  classId     String
+  date        DateTime      @db.Date // Date without time
+  periodNo    Int           // 1 to 8
+  startTime   String        // "09:00"
+  endTime     String        // "09:45"
+  status      SessionStatus @default(OPEN)
+  submittedAt DateTime?
+  qrToken     String?
+  qrCode      String?       // 4-digit code e.g. "4921"
+  geoLat      Float?
+  geoLng      Float?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  subject     Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher     Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  class       Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  records     AttendanceRecord[]
+
+  @@unique([classId, date, periodNo])
+  @@index([teacherId, date])
+  @@index([classId, date])
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id         String           @id @default(cuid())
+  sessionId  String
+  studentId  String
+  status     AttendanceStatus @default(ABSENT)
+  markedAt   DateTime         @default(now())
+  markedBy   String           @default("TEACHER") // "TEACHER" | "STUDENT_QR" | "STUDENT_CODE"
+  ipAddress  String?
+  deviceInfo String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  session    AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student    Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId, studentId])
+  @@index([studentId])
+  @@map("attendance_records")
+}
+
+model LeaveRequest {
+  id            String      @id @default(cuid())
+  studentId     String
+  dateFrom      DateTime    @db.Date
+  dateTo        DateTime    @db.Date
+  subjectIds    String[]
+  reason        String
+  attachmentUrl String?
+  status        LeaveStatus @default(PENDING)
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  student       Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, dateFrom])
+  @@map("leave_requests")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "SCHEDULE" | "LOW_ATTENDANCE" | "LIVE_SESSION" | "WEEKLY_SUMMARY" | "LEAVE_STATUS"
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  actionUrl String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+model StudentSettings {
+  id                   String   @id @default(cuid())
+  studentId            String   @unique
+  language             String   @default("en")
+  notificationsEnabled Boolean  @default(true)
+  parentEmailEnabled   Boolean  @default(false)
+  goalPercent          Float    @default(75.0)
+  studyPlannerEnabled  Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  student              Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("student_settings")
+}
+
+model GamificationBadge {
+  id        String   @id @default(cuid())
+  studentId String
+  badgeType String   // "PERFECT_MONTH" | "NEVER_LATE" | "EARLY_BIRD" | "COMEBACK" | "STREAK_10" | "STREAK_50"
+  earnedAt  DateTime @default(now())
+
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, badgeType])
+  @@map("gamification_badges")
+}
+
+model Streak {
+  id            String    @id @default(cuid())
+  studentId     String    @unique
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  lastMarkedAt  DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  role       String?
+  action     String   // e.g. "SESSION_START", "ATTENDANCE_SUBMIT", "USER_CREATE", "LEAVE_REVIEW"
+  entityType String   // e.g. "AttendanceSession", "User", "TimetableSlot", "LeaveRequest"
+  entityId   String?
+  beforeJson String?  @db.Text
+  afterJson  String?  @db.Text
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
