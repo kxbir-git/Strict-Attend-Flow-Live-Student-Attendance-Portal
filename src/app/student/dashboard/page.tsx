@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   GraduationCap,
   Radio,
@@ -92,8 +93,13 @@ export default function StudentDashboard() {
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100/70 border border-emerald-200 flex items-center justify-center text-emerald-800 font-black text-2xl shadow-xs">
-              {student.name ? student.name[0] : "S"}
+            <div className="relative">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-100/70 border border-emerald-200 flex items-center justify-center text-emerald-800 font-black text-2xl shadow-xs">
+                {student.name ? student.name[0] : "S"}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden border border-orange-200 bg-white shadow-xs">
+                <Image src="/logo.png" alt="Strict Attend Flow" width={24} height={24} className="w-full h-full object-cover" />
+              </div>
             </div>
             <div>
               <div className="flex items-center gap-2">

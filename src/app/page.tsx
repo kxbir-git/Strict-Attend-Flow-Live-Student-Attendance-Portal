@@ -56,6 +56,17 @@ export default function HomePage() {
       {/* Main Hero Section */}
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-16 flex-1 flex flex-col justify-center">
         <div className="text-center max-w-3xl mx-auto space-y-6">
+          <div className="w-20 h-20 mx-auto rounded-3xl overflow-hidden shadow-xl shadow-orange-500/20 border-2 border-orange-200/90 bg-white p-1">
+            <Image
+              src="/logo.png"
+              alt="Strict Attend Flow"
+              width={80}
+              height={80}
+              className="w-full h-full object-cover rounded-2xl"
+              priority
+            />
+          </div>
+
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Real-time • Cryptographically Verified • Anti-Cheat
           </div>

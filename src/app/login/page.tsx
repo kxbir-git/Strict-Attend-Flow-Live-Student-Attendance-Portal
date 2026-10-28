@@ -339,8 +339,13 @@ function LoginForm() {
             {/* 1. STUDENT IDENTITY CARD */}
             <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-4">
               <div className="flex items-center gap-3.5 pb-3 border-b border-slate-200">
-                <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-xs">
-                  {studentResult.student.name.charAt(0)}
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-xs">
+                    {studentResult.student.name.charAt(0)}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-md overflow-hidden border border-orange-200 bg-white shadow-2xs">
+                    <Image src="/logo.png" alt="Logo" width={20} height={20} className="w-full h-full object-cover" />
+                  </div>
                 </div>
                 <div>
                   <h2 className="text-lg font-black text-slate-900 leading-tight">

@@ -1,6 +1,22 @@
-# 🎓 Strict Attend Flow — Live Student Attendance Portal
+<p align="center">
+  <a href="https://github.com/kxbir-git/Strict-Attend-Flow-Live-Student-Attendance-Portal">
+    <img src="public/logo.png" alt="Strict Attend Flow Logo" width="120" height="120" style="border-radius: 24px; box-shadow: 0 10px 25px rgba(234, 88, 12, 0.25);" />
+  </a>
+</p>
 
-Production-grade, single web attendance portal featuring **THREE strictly isolated role-based portals** (Admin, Teacher, Student) sharing one backend. Teachers take live attendance from a manual weekly timetable with date+period auto-detection, attendance is submitted **ONCE and permanently locked forever**, and records are exportable as UTF-8 BOM CSV files with Excel compatibility and instant WhatsApp/Email sharing. Students get a strict read-only portal with smart education features (leave workflow, AI assistant, certificates, notifications, calendar, streaks, buffer tracking).
+<h1 align="center">Strict Attend Flow — Live Student Attendance Portal</h1>
+
+<p align="center">
+  <strong>Production-grade, single web attendance portal featuring THREE strictly isolated role-based portals (Admin, Teacher, Student)</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-14-black?logo=next.js" alt="Next.js 14" />
+  <img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/TailwindCSS-Light%20White-06b6d4?logo=tailwindcss" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Prisma-PostgreSQL-3982CE?logo=prisma" alt="Prisma ORM" />
+  <img src="https://img.shields.io/badge/Deploy-Render-46E3B7?logo=render" alt="Deploy to Render" />
+</p>
 
 ---
 
