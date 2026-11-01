@@ -5,8 +5,6 @@ import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  GraduationCap,
-  Lock,
   ArrowRight,
   Loader2,
   AlertCircle,
@@ -18,16 +16,11 @@ import {
   Search,
   Phone,
   Mail,
-  User,
-  BookOpen,
-  Calendar,
   Clock,
   AlertTriangle,
   RotateCcw,
   Radio,
-  Sparkles,
   BarChart3,
-  Layers,
 } from "lucide-react";
 
 type StaffRole = "TEACHER" | "ADMIN";
