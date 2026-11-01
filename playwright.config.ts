@@ -12,7 +12,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "npm run dev",
+    command: "npx next start -p 3000",
     url: "http://localhost:3000/api/health",
     reuseExistingServer: true,
     timeout: 120 * 1000,

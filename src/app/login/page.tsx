@@ -45,33 +45,50 @@ const STAFF_PRESETS: Record<StaffRole, { email: string; pass: string; title: str
   },
 };
 
-const STUDENT_PRESETS = [
-  { enrollment: "ENR2024001", roll: "BCA3A-001", name: "Rahul Verma", class: "BCA-3A" },
-  { enrollment: "ENR2024002", roll: "BCA3A-002", name: "Priya Sharma", class: "BCA-3A" },
-  { enrollment: "ENR2024026", roll: "BCA3B-001", name: "Varun Dhawan", class: "BCA-3B" },
-  { enrollment: "ENR2024041", roll: "MCA1A-001", name: "Sameer Kulkarni", class: "MCA-1A" },
-];
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
 
-  // If URL has ?staff=true, activate staff mode
-  const initialStaffMode = searchParams.get("staff") === "true";
+  // If URL has ?staff=true or ?role=TEACHER/ADMIN, activate staff mode
+  const roleQuery = searchParams.get("role")?.toUpperCase();
+  const staffQuery = searchParams.get("staff") === "true";
+  const initialStaffMode = staffQuery || roleQuery === "TEACHER" || roleQuery === "ADMIN";
   const [isStaffMode, setIsStaffMode] = useState(initialStaffMode);
-  const [staffRole, setStaffRole] = useState<StaffRole>("TEACHER");
+  const [staffRole, setStaffRole] = useState<StaffRole>(roleQuery === "ADMIN" ? "ADMIN" : "TEACHER");
 
   // Student Enrollment Number lookup state
-  const [enrollmentNo, setEnrollmentNo] = useState("ENR2024001");
+  const [enrollmentNo, setEnrollmentNo] = useState("");
   const [studentResult, setStudentResult] = useState<any | null>(null);
 
   // Staff credentials state
-  const [staffEmail, setStaffEmail] = useState(STAFF_PRESETS.TEACHER.email);
-  const [staffPassword, setStaffPassword] = useState(STAFF_PRESETS.TEACHER.pass);
+  const [staffEmail, setStaffEmail] = useState(
+    roleQuery === "ADMIN" ? STAFF_PRESETS.ADMIN.email : STAFF_PRESETS.TEACHER.email
+  );
+  const [staffPassword, setStaffPassword] = useState(
+    roleQuery === "ADMIN" ? STAFF_PRESETS.ADMIN.pass : STAFF_PRESETS.TEACHER.pass
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // React to URL role changes
+  useEffect(() => {
+    if (roleQuery === "ADMIN") {
+      setIsStaffMode(true);
+      setStaffRole("ADMIN");
+      setStaffEmail(STAFF_PRESETS.ADMIN.email);
+      setStaffPassword(STAFF_PRESETS.ADMIN.pass);
+    } else if (roleQuery === "TEACHER") {
+      setIsStaffMode(true);
+      setStaffRole("TEACHER");
+      setStaffEmail(STAFF_PRESETS.TEACHER.email);
+      setStaffPassword(STAFF_PRESETS.TEACHER.pass);
+    } else if (roleQuery === "STUDENT") {
+      setIsStaffMode(false);
+    }
+  }, [roleQuery]);
 
   // If already authenticated as staff, redirect appropriately
   useEffect(() => {
@@ -129,6 +146,10 @@ function LoginForm() {
         enrollmentNo: enrollmentNo.trim(),
         redirect: false,
       });
+
+      if (roleQuery === "STUDENT") {
+        router.push("/student/dashboard");
+      }
     } catch (err: any) {
       setError(err.message || "An error occurred while retrieving attendance.");
       setStudentResult(null);
@@ -160,8 +181,8 @@ function LoginForm() {
       const sessionData = await sessionRes.json();
       const userRole = sessionData?.user?.role;
 
-      if (userRole === "ADMIN") router.push("/admin/dashboard");
-      else if (userRole === "TEACHER") router.push("/teacher/dashboard");
+      if (userRole === "ADMIN" || staffRole === "ADMIN") router.push("/admin/dashboard");
+      else if (userRole === "TEACHER" || staffRole === "TEACHER") router.push("/teacher/dashboard");
       else router.push("/");
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred during sign in.");
@@ -212,8 +233,8 @@ function LoginForm() {
                 type="button"
                 onClick={() => handleStaffRoleChange("TEACHER")}
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${staffRole === "TEACHER"
-                    ? "bg-white text-indigo-700 shadow-sm border border-slate-200"
-                    : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white text-indigo-700 shadow-sm border border-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
                   }`}
               >
                 <Briefcase className="w-3.5 h-3.5" /> Faculty
@@ -223,8 +244,8 @@ function LoginForm() {
                 type="button"
                 onClick={() => handleStaffRoleChange("ADMIN")}
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${staffRole === "ADMIN"
-                    ? "bg-white text-purple-700 shadow-sm border border-slate-200"
-                    : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white text-purple-700 shadow-sm border border-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
                   }`}
               >
                 <Shield className="w-3.5 h-3.5" /> Admin
@@ -274,28 +295,6 @@ function LoginForm() {
                 </p>
               </div>
 
-              {/* Quick Sample Chips */}
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                  Sample Test Enrollments (Click to fill):
-                </span>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {STUDENT_PRESETS.map((p) => (
-                    <button
-                      key={p.enrollment}
-                      type="button"
-                      onClick={() => setEnrollmentNo(p.enrollment)}
-                      className={`p-2 rounded-xl text-left border text-[11px] transition ${enrollmentNo === p.enrollment
-                          ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                        }`}
-                    >
-                      <div className="font-mono text-[10px] text-slate-500">{p.enrollment}</div>
-                      <div className="truncate font-semibold">{p.name}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               <button
                 type="submit"
@@ -704,8 +703,8 @@ function LoginForm() {
               type="submit"
               disabled={loading}
               className={`w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01] disabled:opacity-50 ${staffRole === "ADMIN"
-                  ? "bg-purple-600 hover:bg-purple-700 shadow-purple-600/30"
-                  : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/30"
+                ? "bg-purple-600 hover:bg-purple-700 shadow-purple-600/30"
+                : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/30"
                 }`}
             >
               {loading ? (

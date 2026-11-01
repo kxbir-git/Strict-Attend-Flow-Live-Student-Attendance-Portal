@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ip = req.headers.get("x-forwarded-for") || req.ip || "127.0.0.1";
+  const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
   const userAgent = req.headers.get("user-agent") || "unknown";
 
   const body = await req.json().catch(() => null);

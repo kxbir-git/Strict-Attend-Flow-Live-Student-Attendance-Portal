@@ -22,9 +22,10 @@ export async function middleware(req: NextRequest) {
 
   const role = token?.role as string | undefined;
 
-  // If user visits /login while authenticated, redirect to their dashboard
+  // If user visits /login while authenticated, redirect to their dashboard (unless switching roles via query param)
   if (pathname === "/login") {
-    if (token && role) {
+    const hasRoleOrStaff = req.nextUrl.searchParams.has("role") || req.nextUrl.searchParams.has("staff");
+    if (token && role && !hasRoleOrStaff) {
       if (role === "ADMIN") return NextResponse.redirect(new URL("/admin/dashboard", req.url));
       if (role === "TEACHER") return NextResponse.redirect(new URL("/teacher/dashboard", req.url));
       if (role === "STUDENT") return NextResponse.redirect(new URL("/student/dashboard", req.url));
