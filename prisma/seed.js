@@ -457,6 +457,7 @@ async function main() {
         },
       });
 
+      const recordsToInsert = [];
       for (let sIdx = 0; sIdx < bcaAStudents.length; sIdx++) {
         const stud = bcaAStudents[sIdx];
         let status = "PRESENT";
@@ -469,16 +470,18 @@ async function main() {
           status = rand > 0.88 ? "ABSENT" : rand > 0.82 ? "LATE" : "PRESENT";
         }
 
-        await prisma.attendanceRecord.create({
-          data: {
-            sessionId: session.id,
-            studentId: stud.id,
-            status,
-            markedBy: "TEACHER",
-            markedAt: sessionDate,
-          },
+        recordsToInsert.push({
+          sessionId: session.id,
+          studentId: stud.id,
+          status,
+          markedBy: "TEACHER",
+          markedAt: sessionDate,
         });
       }
+
+      await prisma.attendanceRecord.createMany({
+        data: recordsToInsert,
+      });
 
       sessionsCreatedCount++;
     }
