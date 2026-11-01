@@ -21,12 +21,12 @@ export async function POST(req: NextRequest) {
   const todayStr = now.toISOString().split("T")[0];
 
   try {
-    // 1. Find the student by rollNo, stripped ENR prefix, or email
+    // 1. Find the student — rollNo stores the enrollment number (e.g. 2400100001)
     let student = await prisma.student.findFirst({
       where: {
         OR: [
           { rollNo: { equals: clean, mode: "insensitive" } },
-          { rollNo: { equals: clean.replace(/^ENR-?/i, ""), mode: "insensitive" } },
+          { rollNo: { equals: enrollmentInput, mode: "insensitive" } },
           { user: { email: { equals: enrollmentInput.toLowerCase(), mode: "insensitive" } } },
         ],
       },
@@ -36,15 +36,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Fallback: match by numeric sequence e.g. ENR2024001 -> 001
+    // Fallback: match by digits suffix (e.g. 2400100001 -> last digits in rollNo)
     if (!student) {
       const digits = enrollmentInput.replace(/\D/g, "");
       if (digits) {
-        const num = parseInt(digits, 10);
-        const formatted3 = num.toString().padStart(3, "0");
         student = await prisma.student.findFirst({
           where: {
-            rollNo: { contains: formatted3 },
+            rollNo: { contains: digits },
           },
           include: {
             user: true,
@@ -182,12 +180,6 @@ export async function POST(req: NextRequest) {
         };
       });
 
-      const rollNumber = student.rollNo;
-      const serial = rollNumber.includes("-") ? rollNumber.split("-").pop()! : rollNumber;
-      const numericPart = serial.replace(/\D/g, "") || "001";
-      const enrollmentNo = `ENR2024${numericPart.padStart(3, "0")}`;
-      const phone = `+91 98765 ${numericPart.padStart(5, "0")}`;
-
       return NextResponse.json({
         success: true,
         data: {
@@ -196,8 +188,8 @@ export async function POST(req: NextRequest) {
             name: student.user.name,
             email: student.user.email,
             rollNo: student.rollNo,
-            enrollmentNo,
-            phone,
+            enrollmentNo: student.rollNo,
+            phone: "",
             className: student.class.name,
             section: student.section || student.class.section,
             department: student.class.department,
@@ -226,39 +218,100 @@ export async function POST(req: NextRequest) {
       });
     }
   } catch (dbErr) {
-    console.warn("Database offline during student lookup, generating resilient curriculum attendance:", dbErr);
+    console.warn("Database offline during student lookup, generating resilient demo data:", dbErr);
   }
 
   // -------------------------------------------------------------------
-  // Resilient Demo / Seed Data Generator (When database is connecting)
+  // Resilient Demo Data — B.Tech CSE, enrollment format 2400XXXXXX
   // -------------------------------------------------------------------
-  const isPriya = clean.includes("002") || clean.includes("PRIYA");
-  const isVarun = clean.includes("026") || clean.includes("VARUN") || clean.includes("3B");
-  const isSameer = clean.includes("041") || clean.includes("SAMEER") || clean.includes("MCA");
 
-  const studentName = isPriya ? "Priya Sharma" : isVarun ? "Varun Dhawan" : isSameer ? "Sameer Kulkarni" : "Rahul Verma";
-  const rollNo = isPriya ? "BCA3A-002" : isVarun ? "BCA3B-001" : isSameer ? "MCA1A-001" : "BCA3A-001";
-  const enrollmentNo = isPriya ? "ENR2024002" : isVarun ? "ENR2024026" : isSameer ? "ENR2024041" : "ENR2024001";
-  const className = isVarun ? "BCA-3B" : isSameer ? "MCA-1A" : "BCA-3A";
-  const section = isVarun ? "B" : "A";
-  const dept = isSameer ? "Computer Science" : "Computer Applications";
-  const sem = isSameer ? 1 : 3;
-  const email = `student.${studentName.toLowerCase().replace(/\s+/g, ".")}@portal.edu`;
-  const phone = isPriya ? "+91 98765 00002" : isVarun ? "+91 98765 00026" : isSameer ? "+91 98765 00041" : "+91 98765 00001";
+  // Try to match known demo profiles by enrollment number
+  const DEMO_PROFILES = [
+    {
+      enrollmentNo: "2400100001",
+      name: "Rahul Verma",
+      rollNo: "BTCSE-A-001",
+      className: "B.Tech CSE-2A",
+      section: "A",
+      email: "2400100001@college.edu",
+      phone: "+91 98765 00001",
+      totalConducted: 45,
+      presentCount: 38,
+    },
+    {
+      enrollmentNo: "2400100002",
+      name: "Priya Sharma",
+      rollNo: "BTCSE-A-002",
+      className: "B.Tech CSE-2A",
+      section: "A",
+      email: "2400100002@college.edu",
+      phone: "+91 98765 00002",
+      totalConducted: 42,
+      presentCount: 39,
+    },
+    {
+      enrollmentNo: "2400100031",
+      name: "Varun Mehta",
+      rollNo: "BTCSE-B-001",
+      className: "B.Tech CSE-2B",
+      section: "B",
+      email: "2400100031@college.edu",
+      phone: "+91 98765 00031",
+      totalConducted: 38,
+      presentCount: 26,
+    },
+    {
+      enrollmentNo: "2400100061",
+      name: "Sameer Singh",
+      rollNo: "BTCSE-C-001",
+      className: "B.Tech CSE-2C",
+      section: "C",
+      email: "2400100061@college.edu",
+      phone: "+91 98765 00061",
+      totalConducted: 40,
+      presentCount: 35,
+    },
+  ];
 
-  const totalConducted = isPriya ? 42 : isVarun ? 38 : 45;
-  const presentCount = isPriya ? 39 : isVarun ? 26 : 38;
-  const absentCount = totalConducted - presentCount;
-  const overallPercentage = Number(((presentCount / totalConducted) * 100).toFixed(1));
+  // Match by exact enrollment, or use first profile as generic fallback
+  const matched = DEMO_PROFILES.find(
+    (p) =>
+      p.enrollmentNo === enrollmentInput ||
+      p.enrollmentNo.toUpperCase() === clean ||
+      p.rollNo.toUpperCase() === clean
+  );
+
+  // If no exact match but input looks like a 2400XXXXXX number, generate a generic profile
+  const digits = enrollmentInput.replace(/\D/g, "");
+  const looksLikeCseEnrollment = digits.startsWith("2400") && digits.length >= 7;
+
+  const profile = matched || (looksLikeCseEnrollment
+    ? {
+        enrollmentNo: enrollmentInput,
+        name: "Student",
+        rollNo: `BTCSE-${digits.slice(-3)}`,
+        className: "B.Tech CSE",
+        section: "A",
+        email: `${enrollmentInput.toLowerCase()}@college.edu`,
+        phone: "",
+        totalConducted: 45,
+        presentCount: 38,
+      }
+    : DEMO_PROFILES[0]);
+
+  const absentCount = profile.totalConducted - profile.presentCount;
+  const overallPercentage = Number(((profile.presentCount / profile.totalConducted) * 100).toFixed(1));
   const isDefaulter = overallPercentage < 75;
-  const bufferAbsences = isDefaulter ? 0 : Math.max(0, Math.floor(presentCount / 0.75 - totalConducted));
-  const classesNeeded = isDefaulter ? Math.max(0, Math.ceil((0.75 * totalConducted - presentCount) / 0.25)) : 0;
+  const bufferAbsences = isDefaulter ? 0 : Math.max(0, Math.floor(profile.presentCount / 0.75 - profile.totalConducted));
+  const classesNeeded = isDefaulter
+    ? Math.max(0, Math.ceil((0.75 * profile.totalConducted - profile.presentCount) / 0.25))
+    : 0;
 
   const demoSubjects = [
     {
       id: "sub-1",
-      code: isSameer ? "MCA-101" : "BCA-301",
-      name: isSameer ? "Advanced DBMS & Cloud" : "Database Management Systems",
+      code: "CSE-201",
+      name: "Data Structures & Algorithms",
       teacherName: "Prof. Rajesh Sharma",
       totalPlanned: 45,
       conducted: 15,
@@ -272,8 +325,8 @@ export async function POST(req: NextRequest) {
     },
     {
       id: "sub-2",
-      code: isSameer ? "MCA-102" : "BCA-302",
-      name: isSameer ? "Machine Learning Foundations" : "Data Structures & Algorithms",
+      code: "CSE-202",
+      name: "Object Oriented Programming",
       teacherName: "Dr. Ananya Roy",
       totalPlanned: 45,
       conducted: 12,
@@ -287,8 +340,8 @@ export async function POST(req: NextRequest) {
     },
     {
       id: "sub-3",
-      code: isSameer ? "MCA-103" : "BCA-303",
-      name: isSameer ? "Distributed Systems" : "Operating Systems",
+      code: "CSE-203",
+      name: "Computer Networks",
       teacherName: "Prof. Vikram Malhotra",
       totalPlanned: 40,
       conducted: 10,
@@ -302,8 +355,8 @@ export async function POST(req: NextRequest) {
     },
     {
       id: "sub-4",
-      code: "BCA-304",
-      name: "Web Technologies",
+      code: "CSE-204",
+      name: "Database Management Systems",
       teacherName: "Prof. Amit Verma",
       totalPlanned: 40,
       conducted: 8,
@@ -315,46 +368,61 @@ export async function POST(req: NextRequest) {
       bufferRemaining: 0,
       classesNeededToRecover: 0,
     },
+    {
+      id: "sub-5",
+      code: "CSE-205",
+      name: "Operating Systems",
+      teacherName: "Dr. Meera Patel",
+      totalPlanned: 45,
+      conducted: 11,
+      attended: 7,
+      absent: 4,
+      cumulativePercentage: 63.6,
+      isDefaulter: true,
+      curriculumProgress: 24,
+      bufferRemaining: 0,
+      classesNeededToRecover: 4,
+    },
   ];
 
   const demoPeriods = [
     {
       periodNo: 1,
-      timeSlot: "09:00 - 09:45",
+      timeSlot: "09:00 - 09:50",
       subjectName: demoSubjects[0].name,
       subjectCode: demoSubjects[0].code,
       teacherName: demoSubjects[0].teacherName,
-      room: "Lab 2",
+      room: "Lab 102",
       status: "PRESENT",
       isLive: false,
     },
     {
       periodNo: 2,
-      timeSlot: "09:45 - 10:30",
+      timeSlot: "09:50 - 10:40",
       subjectName: demoSubjects[1].name,
       subjectCode: demoSubjects[1].code,
       teacherName: demoSubjects[1].teacherName,
-      room: "Room 304",
+      room: "Room 301",
       status: "PRESENT",
       isLive: false,
     },
     {
       periodNo: 3,
-      timeSlot: "10:45 - 11:30",
+      timeSlot: "10:50 - 11:40",
       subjectName: demoSubjects[2].name,
       subjectCode: demoSubjects[2].code,
       teacherName: demoSubjects[2].teacherName,
-      room: "Room 201",
+      room: "Room 204",
       status: "ABSENT",
       isLive: false,
     },
     {
       periodNo: 4,
-      timeSlot: "11:30 - 12:15",
+      timeSlot: "11:40 - 12:30",
       subjectName: demoSubjects[3].name,
       subjectCode: demoSubjects[3].code,
       teacherName: demoSubjects[3].teacherName,
-      room: "Lab 1",
+      room: "Lab 101",
       status: "SCHEDULED",
       isLive: false,
     },
@@ -364,16 +432,16 @@ export async function POST(req: NextRequest) {
     success: true,
     data: {
       student: {
-        id: `mock-${enrollmentNo}`,
-        name: studentName,
-        email,
-        rollNo,
-        enrollmentNo,
-        phone,
-        className,
-        section,
-        department: dept,
-        semester: sem,
+        id: `demo-${profile.enrollmentNo}`,
+        name: profile.name,
+        email: profile.email,
+        rollNo: profile.rollNo,
+        enrollmentNo: profile.enrollmentNo,
+        phone: profile.phone,
+        className: profile.className,
+        section: profile.section,
+        department: "Computer Science & Engineering",
+        semester: 3,
         goalPercent: 85,
       },
       todayAttendance: {
@@ -388,8 +456,8 @@ export async function POST(req: NextRequest) {
       },
       cumulativeAttendance: {
         overallPercentage,
-        totalConducted,
-        presentCount,
+        totalConducted: profile.totalConducted,
+        presentCount: profile.presentCount,
         absentCount,
         isDefaulter,
         status: isDefaulter ? "DEFAULTER_RISK" : "ELIGIBLE",

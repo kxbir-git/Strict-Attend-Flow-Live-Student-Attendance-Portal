@@ -36,11 +36,11 @@ const FALLBACK_STUDENTS = [
     id: "student-seed-1",
     userId: "user-student-1",
     name: "Rahul Verma",
-    email: "student.rahul@portal.edu",
-    rollNo: "BCA3A-001",
-    enrollmentNo: "ENR2024001",
-    classId: "class-bca-3a",
-    className: "BCA-3A",
+    email: "2400100001@college.edu",
+    rollNo: "BTCSE-A-001",
+    enrollmentNo: "2400100001",
+    classId: "class-btcse-2a",
+    className: "B.Tech CSE-2A",
     section: "A",
     phone: "+91 98765 00001",
   },
@@ -48,37 +48,37 @@ const FALLBACK_STUDENTS = [
     id: "student-seed-2",
     userId: "user-student-2",
     name: "Priya Sharma",
-    email: "student.priya.sharma@portal.edu",
-    rollNo: "BCA3A-002",
-    enrollmentNo: "ENR2024002",
-    classId: "class-bca-3a",
-    className: "BCA-3A",
+    email: "2400100002@college.edu",
+    rollNo: "BTCSE-A-002",
+    enrollmentNo: "2400100002",
+    classId: "class-btcse-2a",
+    className: "B.Tech CSE-2A",
     section: "A",
     phone: "+91 98765 00002",
   },
   {
-    id: "student-seed-26",
-    userId: "user-student-26",
-    name: "Varun Dhawan",
-    email: "student.varun.dhawan@portal.edu",
-    rollNo: "BCA3B-001",
-    enrollmentNo: "ENR2024026",
-    classId: "class-bca-3b",
-    className: "BCA-3B",
+    id: "student-seed-3",
+    userId: "user-student-3",
+    name: "Varun Mehta",
+    email: "2400100031@college.edu",
+    rollNo: "BTCSE-B-001",
+    enrollmentNo: "2400100031",
+    classId: "class-btcse-2b",
+    className: "B.Tech CSE-2B",
     section: "B",
-    phone: "+91 98765 00026",
+    phone: "+91 98765 00031",
   },
   {
-    id: "student-seed-41",
-    userId: "user-student-41",
-    name: "Sameer Kulkarni",
-    email: "student.sameer.kulkarni@portal.edu",
-    rollNo: "MCA1A-001",
-    enrollmentNo: "ENR2024041",
-    classId: "class-mca-1a",
-    className: "MCA-1A",
-    section: "A",
-    phone: "+91 98765 00041",
+    id: "student-seed-4",
+    userId: "user-student-4",
+    name: "Sameer Singh",
+    email: "2400100061@college.edu",
+    rollNo: "BTCSE-C-001",
+    enrollmentNo: "2400100061",
+    classId: "class-btcse-2c",
+    className: "B.Tech CSE-2C",
+    section: "C",
+    phone: "+91 98765 00061",
   },
 ];
 
@@ -119,7 +119,7 @@ export const authOptions: NextAuthOptions = {
               where: {
                 OR: [
                   { rollNo: { equals: cleanInput, mode: "insensitive" } },
-                  { rollNo: { equals: cleanInput.replace(/^ENR-?/i, ""), mode: "insensitive" } },
+                  { rollNo: { equals: enrollmentInput, mode: "insensitive" } },
                   { user: { email: { equals: enrollmentInput.toLowerCase(), mode: "insensitive" } } },
                 ],
               },
@@ -162,13 +162,13 @@ export const authOptions: NextAuthOptions = {
             console.warn("Database offline, evaluating fallback student demo profiles:", dbErr);
           }
 
-          // Fallback match for offline demo mode
+          // Fallback match for offline demo mode — matches enrollmentNo exactly or by digits
           const fallbackStudent = FALLBACK_STUDENTS.find(
             (s) =>
               s.enrollmentNo.toUpperCase() === cleanInput ||
+              s.enrollmentNo === enrollmentInput ||
               s.rollNo.toUpperCase() === cleanInput ||
               s.rollNo.replace(/-/g, "").toUpperCase() === cleanInput.replace(/-/g, "") ||
-              cleanInput.includes(s.rollNo.replace(/\D/g, "")) ||
               s.email.toLowerCase() === enrollmentInput.toLowerCase()
           ) || FALLBACK_STUDENTS[0];
 

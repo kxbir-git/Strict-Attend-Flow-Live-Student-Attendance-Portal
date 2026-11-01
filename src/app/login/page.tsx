@@ -275,7 +275,7 @@ function LoginForm() {
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
                   <span>Enter Student Enrollment Number</span>
-                  <span className="text-[10px] text-slate-400 font-normal">e.g. ENR2024001 or Roll No</span>
+                  <span className="text-[10px] text-slate-400 font-normal">e.g. 2400100001</span>
                 </label>
                 <div className="relative">
                   <input
@@ -284,7 +284,7 @@ function LoginForm() {
                     value={enrollmentNo}
                     onChange={(e) => setEnrollmentNo(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-mono focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 transition uppercase tracking-wider"
-                    placeholder="ENR2024001 / BCA3A-001"
+                    placeholder="2400XXXXXX"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                     <Search className="w-4 h-4" />
