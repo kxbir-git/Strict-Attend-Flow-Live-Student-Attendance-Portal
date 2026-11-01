@@ -15,13 +15,13 @@ import {
   LogOut,
   Menu,
   X,
-  Lock,
-  User,
+  Users,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/teacher/dashboard", icon: Calendar },
   { name: "Take Attendance", href: "/teacher/take-attendance", icon: CheckSquare },
+  { name: "My Students", href: "/teacher/students", icon: Users },
   { name: "Timetable Builder", href: "/teacher/timetable", icon: Clock },
   { name: "Session History", href: "/teacher/history", icon: FileSpreadsheet },
   { name: "Class Reports", href: "/teacher/reports", icon: BarChart3 },

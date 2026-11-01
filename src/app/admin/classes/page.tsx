@@ -33,6 +33,9 @@ export default function AdminClassesPage() {
   const [plannedLectures] = useState<number>(45);
   const [subjectSaving, setSubjectSaving] = useState(false);
 
+  // Inline teacher reassign
+  const [assigningSubjectId, setAssigningSubjectId] = useState<string | null>(null);
+
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   async function loadData() {
@@ -91,6 +94,29 @@ export default function AdminClassesPage() {
       setMessage({ text: err.message, type: "error" });
     } finally {
       setClassSaving(false);
+    }
+  };
+
+  const handleAssignTeacher = async (subjectId: string, teacherId: string) => {
+    setAssigningSubjectId(subjectId);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/subjects/${subjectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacherId: teacherId || null }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setMessage({ text: data.error || "Failed to assign teacher", type: "error" });
+      } else {
+        setMessage({ text: "Teacher assigned successfully!", type: "success" });
+        loadData();
+      }
+    } catch (err: any) {
+      setMessage({ text: err.message, type: "error" });
+    } finally {
+      setAssigningSubjectId(null);
     }
   };
 
@@ -239,6 +265,7 @@ export default function AdminClassesPage() {
                   <th className="p-3.5">Subject Name</th>
                   <th className="p-3.5">Class</th>
                   <th className="p-3.5">Assigned Faculty</th>
+                  <th className="p-3.5">Assign / Change</th>
                   <th className="p-3.5 text-center">Lectures Plan</th>
                   <th className="p-3.5 text-center">Sessions Held</th>
                 </tr>
@@ -251,6 +278,26 @@ export default function AdminClassesPage() {
                     <td className="p-3.5 font-semibold text-slate-700">{sub.class?.name}</td>
                     <td className="p-3.5 text-slate-800">
                       {sub.teacher?.user?.name || <span className="text-slate-400 italic">Unassigned</span>}
+                    </td>
+                    <td className="p-3.5">
+                      <div className="flex items-center gap-2">
+                        <select
+                          defaultValue={sub.teacherId || ""}
+                          onChange={(e) => handleAssignTeacher(sub.id, e.target.value)}
+                          disabled={assigningSubjectId === sub.id}
+                          className="text-xs px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:ring-2 focus:ring-purple-500 focus:outline-none disabled:opacity-50"
+                        >
+                          <option value="">— Unassign —</option>
+                          {teachers.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.user?.name}
+                            </option>
+                          ))}
+                        </select>
+                        {assigningSubjectId === sub.id && (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600 flex-shrink-0" />
+                        )}
+                      </div>
                     </td>
                     <td className="p-3.5 text-center font-mono text-slate-700">{sub.totalPlannedLectures}</td>
                     <td className="p-3.5 text-center font-bold text-purple-700 font-mono">
