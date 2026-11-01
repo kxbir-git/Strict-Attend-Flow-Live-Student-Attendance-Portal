@@ -5,6 +5,8 @@ import { createUserSchema, updateUserSchema } from "@/lib/validations";
 import bcrypt from "bcryptjs";
 import { logAuditEvent } from "@/lib/audit";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   const { errorResponse } = await requireRole(["ADMIN"]);
   if (errorResponse) return errorResponse;

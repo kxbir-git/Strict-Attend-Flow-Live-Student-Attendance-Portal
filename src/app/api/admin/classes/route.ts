@@ -4,6 +4,8 @@ import { requireRole } from "@/lib/permissions";
 import { createClassSchema } from "@/lib/validations";
 import { logAuditEvent } from "@/lib/audit";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const { errorResponse } = await requireRole(["ADMIN", "TEACHER"]);
   if (errorResponse) return errorResponse;
