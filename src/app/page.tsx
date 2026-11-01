@@ -125,9 +125,9 @@ export default function HomePage() {
             <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
               <FileText className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">Official Signed Certificates</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-1">Subject Notes &amp; Video Classes</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Generate tamper-proof PDF certificates with verification QR codes for scholarships and exams.
+              Access unit-wise syllabus PDFs, faculty PPT slides, recorded video lectures, and exam cheatsheets with in-page preview.
             </p>
           </div>
 

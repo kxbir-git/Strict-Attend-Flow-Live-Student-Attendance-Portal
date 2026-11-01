@@ -414,6 +414,13 @@ export default function StudentDashboard() {
             </Link>
 
             <Link
+              href="/student/notes"
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 font-bold text-xs flex items-center gap-2 transition"
+            >
+              <BookOpen className="w-4 h-4 text-indigo-600" /> Subject Notes &amp; Material
+            </Link>
+
+            <Link
               href="/student/leave"
               className="w-full py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 font-bold text-xs flex items-center gap-2 transition"
             >
