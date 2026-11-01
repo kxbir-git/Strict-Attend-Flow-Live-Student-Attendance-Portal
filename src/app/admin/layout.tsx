@@ -100,7 +100,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Sub-header Navigation Bar for Admin Desktop */}
-        <nav className="hidden lg:flex items-center gap-1 mt-3 pt-2 border-t border-slate-100 overflow-x-auto">
+        <nav className="hidden lg:flex items-center gap-1.5 mt-3 pt-2.5 border-t border-slate-100 overflow-x-auto pb-1 scrollbar-none">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.href}
                 href={item.href}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${isActive
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex-shrink-0 ${isActive
                   ? "bg-purple-600 text-white shadow-xs"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                   }`}
@@ -156,7 +156,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Main Content */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">{children}</main>
     </div>
   );
 }
